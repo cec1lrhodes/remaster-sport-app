@@ -1,0 +1,6 @@
+---
+description: Prettier formatting rules — never modify formatting
+alwaysApply: true
+---
+
+Never modify Prettier formatting. Do not remove or add semicolons, do not change quotes, indentation, trailing commas or any other formatting. Prettier config is the source of truth for all formatting. If code has semicolons — leave them. If ESLint and Prettier conflict — Prettier wins. Only fix real logic errors, never fix formatting.

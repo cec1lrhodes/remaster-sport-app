@@ -1,0 +1,20 @@
+---
+description: SOLID and KISS principles
+alwaysApply: true
+---
+
+Always follow SOLID and KISS principles:
+
+**SOLID:**
+
+- **S** — Single Responsibility: each component/function does one thing only
+- **O** — Open/Closed: open for extension, closed for modification
+- **L** — Liskov Substitution: subtypes must be replaceable by their base types
+- **I** — Interface Segregation: prefer small specific interfaces over one large general one
+- **D** — Dependency Inversion: depend on abstractions, not on concrete implementations
+
+**KISS:**
+
+- Keep It Simple, Stupid
+- The simpler solution is always better than the complex one
+- Do not add abstractions without a real need
