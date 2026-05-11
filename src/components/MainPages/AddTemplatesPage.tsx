@@ -1,5 +1,6 @@
+import { useMemo } from "react";
 import { ChevronLeft, XIcon } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
@@ -17,7 +18,7 @@ import {
   CardTitle,
   CardFooter,
   CardContent,
-} from "@/components/ui/card";
+} from "@/ui/card";
 
 import {
   Accordion,
@@ -25,6 +26,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/ui/accordion";
+import { useTemplatesStore } from "@/store/templatesStore";
+import type { DraftTemplateExercise } from "@/types/templates";
 
 const exercises = [
   { name: "Squat", id: 1 },
@@ -35,29 +38,46 @@ const exercises = [
   { name: "Bar pressing", id: 6 },
 ];
 
-const templatePreview = [
-  {
-    day: "A",
-    exercises: [
-      { name: "Bench", sets: 3, reps: 5, kg: 70 },
-      { name: "Squat", sets: 3, reps: 3, kg: 90 },
-      { name: "Pull-ups", sets: 4, reps: 8, kg: 0 },
-    ],
-  },
-  {
-    day: "B",
-    exercises: [
-      { name: "Deadlift", sets: 3, reps: 5, kg: 110 },
-      { name: "Bar pressing", sets: 4, reps: 6, kg: 45 },
-    ],
-  },
-  {
-    day: "C",
-    exercises: [{ name: "Bench Press", sets: 5, reps: 5, kg: 75 }],
-  },
-];
+const dayLabels: Record<number, string> = {
+  1: "A",
+  2: "B",
+  3: "C",
+};
 
 export const AddTemplatesPage = () => {
+  const navigate = useNavigate();
+  const draft = useTemplatesStore((state) => state.draft);
+  const error = useTemplatesStore((state) => state.error);
+  const isCreating = useTemplatesStore((state) => state.isCreating);
+  const setDraftField = useTemplatesStore((state) => state.setDraftField);
+  const addExerciseToDraft = useTemplatesStore(
+    (state) => state.addExerciseToDraft,
+  );
+  const removeExerciseFromDraft = useTemplatesStore(
+    (state) => state.removeExerciseFromDraft,
+  );
+  const createTemplate = useTemplatesStore((state) => state.createTemplate);
+
+  const groupedExercises = useMemo(() => {
+    return draft.exercises.reduce<
+      Record<number, Record<number, DraftTemplateExercise[]>>
+    >((acc, exercise) => {
+      acc[exercise.weekNumber] ??= {};
+      acc[exercise.weekNumber][exercise.dayNumber] ??= [];
+      acc[exercise.weekNumber][exercise.dayNumber].push(exercise);
+
+      return acc;
+    }, {});
+  }, [draft.exercises]);
+
+  const handleConfirm = async () => {
+    const template = await createTemplate();
+
+    if (template) {
+      navigate({ to: "/templates" });
+    }
+  };
+
   return (
     <div>
       {/* HEADER */}
@@ -80,7 +100,12 @@ export const AddTemplatesPage = () => {
         </h1>
 
         <div className="mt-3 grid w-full grid-cols-2 gap-3">
-          <Select>
+          <Select
+            value={String(draft.selectedWeek)}
+            onValueChange={(value) =>
+              setDraftField("selectedWeek", Number(value))
+            }
+          >
             <SelectTrigger className="w-full focus-visible:border-input focus-visible:ring-0 border-0 border-b border-white/20 rounded-none ">
               <SelectValue placeholder="week" />
             </SelectTrigger>
@@ -90,19 +115,24 @@ export const AddTemplatesPage = () => {
               className="z-9999 w-(--radix-select-trigger-width) border border-white/20 bg-black ring-0"
             >
               <SelectGroup>
-                <SelectItem value="week-1">1</SelectItem>
-                <SelectItem value="week-2">2</SelectItem>
-                <SelectItem value="week-3">3</SelectItem>
-                <SelectItem value="week-4">4</SelectItem>
-                <SelectItem value="week-5">5</SelectItem>
-                <SelectItem value="week-6">6</SelectItem>
-                <SelectItem value="week-7">7</SelectItem>
-                <SelectItem value="week-8">8</SelectItem>
+                <SelectItem value="1">1</SelectItem>
+                <SelectItem value="2">2</SelectItem>
+                <SelectItem value="3">3</SelectItem>
+                <SelectItem value="4">4</SelectItem>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="6">6</SelectItem>
+                <SelectItem value="7">7</SelectItem>
+                <SelectItem value="8">8</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
 
-          <Select>
+          <Select
+            value={String(draft.selectedDay)}
+            onValueChange={(value) =>
+              setDraftField("selectedDay", Number(value))
+            }
+          >
             <SelectTrigger className="w-full border-0 border-b border-white/20 rounded-none focus-visible:border-input focus-visible:ring-0">
               <SelectValue placeholder="day" />
             </SelectTrigger>
@@ -112,9 +142,9 @@ export const AddTemplatesPage = () => {
               className="z-9999 w-(--radix-select-trigger-width) border border-white/20 bg-black ring-0"
             >
               <SelectGroup>
-                <SelectItem value="day-a">A</SelectItem>
-                <SelectItem value="day-b">B</SelectItem>
-                <SelectItem value="day-c">C</SelectItem>
+                <SelectItem value="1">A</SelectItem>
+                <SelectItem value="2">B</SelectItem>
+                <SelectItem value="3">C</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -124,7 +154,15 @@ export const AddTemplatesPage = () => {
       <div className="mt-5 grid grid-cols-2 gap-3">
         {exercises.map((exercise) => (
           <div key={exercise.id}>
-            <Button className="">
+            <Button
+              type="button"
+              className={
+                draft.currentExercise === exercise.name
+                  ? "border border-white/40 bg-white text-black"
+                  : ""
+              }
+              onClick={() => setDraftField("currentExercise", exercise.name)}
+            >
               <span className="font-space-mono">{exercise.name}</span>
             </Button>
           </div>
@@ -135,11 +173,27 @@ export const AddTemplatesPage = () => {
         <Input
           className="w-full border-0 border-b border-white/20 rounded-none focus-visible:border-input focus-visible:ring-0 placeholder:font-space-mono"
           placeholder="custom exercise"
+          value={draft.customExercise}
+          onChange={(event) =>
+            setDraftField("customExercise", event.target.value)
+          }
         />
-        <Button className="">
+        <Button
+          type="button"
+          className=""
+          onClick={() =>
+            addExerciseToDraft(draft.customExercise || draft.currentExercise)
+          }
+        >
           <span className="font-montserrat">Add</span>
         </Button>
       </div>
+
+      {draft.currentExercise && (
+        <p className="mt-3 pl-2 font-space-mono text-sm text-white/60">
+          selected: {draft.currentExercise}
+        </p>
+      )}
 
       {/* REPS SETS KG */}
       <div className="mt-10 flex  justify-center gap-20 font-montserrat text-[#fcfdff]">
@@ -148,6 +202,10 @@ export const AddTemplatesPage = () => {
           <Input
             className="w-full border-0 border-b placeholder:text-center text-center border-white/20 rounded-none focus-visible:border-input focus-visible:ring-0 placeholder:font-space-mono"
             placeholder="0"
+            value={draft.currentReps}
+            onChange={(event) =>
+              setDraftField("currentReps", event.target.value)
+            }
           />
         </div>
         <div>
@@ -155,6 +213,10 @@ export const AddTemplatesPage = () => {
           <Input
             className="w-full border-0 border-b  placeholder:text-center text-center border-white/20 rounded-none focus-visible:border-input focus-visible:ring-0 placeholder:font-space-mono"
             placeholder="0"
+            value={draft.currentSets}
+            onChange={(event) =>
+              setDraftField("currentSets", event.target.value)
+            }
           />
         </div>
         <div>
@@ -162,9 +224,17 @@ export const AddTemplatesPage = () => {
           <Input
             className="w-full border-0 border-b  placeholder:text-center text-center border-white/20 rounded-none focus-visible:border-input focus-visible:ring-0 placeholder:font-space-mono"
             placeholder="0"
+            value={draft.currentKg}
+            onChange={(event) => setDraftField("currentKg", event.target.value)}
           />
         </div>
       </div>
+
+      {error && (
+        <p className="mt-4 pl-2 font-montserrat text-sm text-red-400">
+          {error}
+        </p>
+      )}
 
       {/* FULL CARD | CONFIRM | NAME */}
 
@@ -175,54 +245,100 @@ export const AddTemplatesPage = () => {
               Full Card
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <Accordion type="single" collapsible defaultValue="item-1">
-              <AccordionItem value="item-1" className="border-white/20">
-                <AccordionTrigger className=" text-[#fcfdff] hover:no-underline focus-visible:border-input focus-visible:ring-0 border-0 border-b border-white/20 rounded-none  ">
-                  <span className="font-montserrat"> Week 1</span>
-                </AccordionTrigger>
-                <AccordionContent className="space-y-5 mt-5">
-                  {templatePreview.map((day) => (
-                    <div key={day.day} className="space-y-2">
-                      <h3 className="font-space-mono text-sm text-white/70">
-                        {day.day}
-                      </h3>
+          <CardContent className="space-y-5">
+            <div className="space-y-3">
+              <Input
+                className="w-full border-0 border-b border-white/20 rounded-none focus-visible:border-input focus-visible:ring-0 placeholder:font-space-mono"
+                placeholder="template name"
+                value={draft.title}
+                onChange={(event) => setDraftField("title", event.target.value)}
+              />
+              <Input
+                className="w-full border-0 border-b border-white/20 rounded-none focus-visible:border-input focus-visible:ring-0 placeholder:font-space-mono"
+                placeholder="description"
+                value={draft.description}
+                onChange={(event) =>
+                  setDraftField("description", event.target.value)
+                }
+              />
+            </div>
 
-                      <div className="space-y-2">
-                        {day.exercises.map((exercise) => (
-                          <div
-                            key={`${day.day}-${exercise.name}`}
-                            className="flex items-center justify-between gap-3 rounded-md border border-white/10 px-3 py-2"
-                          >
-                            <span className="font-space-mono text-sm text-[#fcfdff]">
-                              {exercise.name} {exercise.sets}x{exercise.reps}{" "}
-                              {exercise.kg}kg
-                            </span>
+            {draft.exercises.length === 0 ? (
+              <p className="font-space-mono text-sm text-white/50">
+                Add exercises to build this template.
+              </p>
+            ) : (
+              <Accordion
+                type="single"
+                collapsible
+                defaultValue={`week-${draft.selectedWeek}`}
+              >
+                {Object.entries(groupedExercises).map(([weekNumber, days]) => (
+                  <AccordionItem
+                    key={weekNumber}
+                    value={`week-${weekNumber}`}
+                    className="border-white/20"
+                  >
+                    <AccordionTrigger className=" text-[#fcfdff] hover:no-underline focus-visible:border-input focus-visible:ring-0 border-0 border-b border-white/20 rounded-none  ">
+                      <span className="font-montserrat">Week {weekNumber}</span>
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-5 mt-5">
+                      {Object.entries(days).map(([dayNumber, dayExercises]) => (
+                        <div key={dayNumber} className="space-y-2">
+                          <h3 className="font-space-mono text-sm text-white/70">
+                            {dayLabels[Number(dayNumber)] ?? dayNumber}
+                          </h3>
 
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-xs"
-                              aria-label={`Delete ${exercise.name}`}
-                              className="text-white/50 hover:bg-white/10 hover:text-white focus-visible:border-input focus-visible:ring-0"
-                            >
-                              <XIcon className="size-3" aria-hidden="true" />
-                            </Button>
+                          <div className="space-y-2">
+                            {dayExercises.map((exercise) => (
+                              <div
+                                key={exercise.localId}
+                                className="flex items-center justify-between gap-3 rounded-md border border-white/10 px-3 py-2"
+                              >
+                                <span className="font-space-mono text-sm text-[#fcfdff]">
+                                  {exercise.exercise} {exercise.sets}x
+                                  {exercise.reps} {exercise.kg ?? 0}kg
+                                </span>
+
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  aria-label={`Delete ${exercise.exercise}`}
+                                  className="text-white/50 hover:bg-white/10 hover:text-white focus-visible:border-input focus-visible:ring-0"
+                                  onClick={() =>
+                                    removeExerciseFromDraft(exercise.localId)
+                                  }
+                                >
+                                  <XIcon
+                                    className="size-3"
+                                    aria-hidden="true"
+                                  />
+                                </Button>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+                        </div>
+                      ))}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            )}
           </CardContent>
           <CardFooter className="flex justify-between border-t-0 bg-transparent">
-            <Button className="bg-blue-50 text-blue-500 dark:bg-blue-950 dark:text-blue-300 ">
-              <span className="font-montserrat">Set name</span>
-            </Button>
-            <Button className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 hover:text-green-500">
-              <span className="font-montserrat">Confirm</span>
+            <span className="font-space-mono text-sm text-white/50">
+              {draft.exercises.length} exercises
+            </span>
+            <Button
+              type="button"
+              className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 hover:text-green-500"
+              disabled={isCreating}
+              onClick={handleConfirm}
+            >
+              <span className="font-montserrat">
+                {isCreating ? "Saving..." : "Confirm"}
+              </span>
             </Button>
           </CardFooter>
         </Card>

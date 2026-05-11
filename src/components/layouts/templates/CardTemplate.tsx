@@ -12,34 +12,40 @@ import { Badge } from "@/ui/badge";
 
 interface CardTemplateProps {
   title: string;
-  cardDescription: string;
+  cardDescription?: string | null;
   cardDate: string;
+  exerciseCount: number;
+  onDelete: () => void;
 }
 
 export const CardTemplate = ({
   title,
   cardDescription,
   cardDate,
+  exerciseCount,
+  onDelete,
 }: CardTemplateProps) => {
   return (
     <div>
       <Card>
         <CardHeader>
           <CardTitle className="font-space-mono">{title}</CardTitle>
-          <CardDescription>{cardDescription}</CardDescription>
+          <CardDescription>
+            {cardDescription || "No description"}
+          </CardDescription>
           <CardAction>
-            <Button className="bg-red-800 ">
+            <Button type="button" className="bg-red-800" onClick={onDelete}>
               <span className="font-montserrat">delete</span>
             </Button>
           </CardAction>
         </CardHeader>
         <CardContent>
-          <p>Card Content</p>
+          <p className="font-montserrat">{exerciseCount} exercises</p>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="justify-between">
           <p className="text-[#eeece7]">DATE: {cardDate}</p>
           <Badge className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">
-            completed
+            template
           </Badge>
         </CardFooter>
       </Card>
