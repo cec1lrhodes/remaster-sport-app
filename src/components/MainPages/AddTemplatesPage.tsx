@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { ChevronLeft, XIcon } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ChevronDown, ChevronLeft, XIcon } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 
 import { Button } from "@/ui/button";
@@ -20,12 +20,6 @@ import {
   CardContent,
 } from "@/ui/card";
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/ui/accordion";
 import { useTemplatesStore } from "@/store/templatesStore";
 import type { DraftTemplateExercise } from "@/types/templates";
 
@@ -33,7 +27,7 @@ const exercises = [
   { name: "Squat", id: 1 },
   { name: "Bench Press", id: 2 },
   { name: "Deadlift", id: 3 },
-  { name: "Squat", id: 4 },
+  { name: "Bulgarian-Squats", id: 4 },
   { name: "Pull-ups", id: 5 },
   { name: "Bar pressing", id: 6 },
 ];
@@ -46,6 +40,7 @@ const dayLabels: Record<number, string> = {
 
 export const AddTemplatesPage = () => {
   const navigate = useNavigate();
+  const [openWeek, setOpenWeek] = useState<number | null>(null);
   const draft = useTemplatesStore((state) => state.draft);
   const error = useTemplatesStore((state) => state.error);
   const isCreating = useTemplatesStore((state) => state.isCreating);
@@ -69,6 +64,31 @@ export const AddTemplatesPage = () => {
       return acc;
     }, {});
   }, [draft.exercises]);
+  const groupedExerciseEntries = Object.entries(groupedExercises).sort(
+    ([weekA], [weekB]) => Number(weekA) - Number(weekB),
+  );
+  const selectedExercise = draft.customExercise.trim() || draft.currentExercise;
+
+  const handleExerciseSelect = (exerciseName: string) => {
+    setDraftField("currentExercise", exerciseName);
+
+    if (draft.customExercise) {
+      setDraftField("customExercise", "");
+    }
+  };
+
+  const handleCustomExerciseChange = (value: string) => {
+    setDraftField("customExercise", value);
+
+    if (value.trim() && draft.currentExercise) {
+      setDraftField("currentExercise", "");
+    }
+  };
+
+  const handleAddExercise = () => {
+    setOpenWeek(draft.selectedWeek);
+    addExerciseToDraft();
+  };
 
   const handleConfirm = async () => {
     const template = await createTemplate();
@@ -157,11 +177,12 @@ export const AddTemplatesPage = () => {
             <Button
               type="button"
               className={
+                !draft.customExercise.trim() &&
                 draft.currentExercise === exercise.name
                   ? "border border-white/40 bg-white text-black"
                   : ""
               }
-              onClick={() => setDraftField("currentExercise", exercise.name)}
+              onClick={() => handleExerciseSelect(exercise.name)}
             >
               <span className="font-space-mono">{exercise.name}</span>
             </Button>
@@ -174,24 +195,13 @@ export const AddTemplatesPage = () => {
           className="w-full border-0 border-b border-white/20 rounded-none focus-visible:border-input focus-visible:ring-0 placeholder:font-space-mono"
           placeholder="custom exercise"
           value={draft.customExercise}
-          onChange={(event) =>
-            setDraftField("customExercise", event.target.value)
-          }
+          onChange={(event) => handleCustomExerciseChange(event.target.value)}
         />
-        <Button
-          type="button"
-          className=""
-          onClick={() =>
-            addExerciseToDraft(draft.customExercise || draft.currentExercise)
-          }
-        >
-          <span className="font-montserrat">Add</span>
-        </Button>
       </div>
 
-      {draft.currentExercise && (
+      {selectedExercise && (
         <p className="mt-3 pl-2 font-space-mono text-sm text-white/60">
-          selected: {draft.currentExercise}
+          selected: {selectedExercise}
         </p>
       )}
 
@@ -230,6 +240,18 @@ export const AddTemplatesPage = () => {
         </div>
       </div>
 
+      <div className="mt-5 flex justify-center">
+        <Button
+          type="button"
+          className="bg-white text-black w-full h-[40px] rounded-[32px]"
+          onClick={handleAddExercise}
+        >
+          <span className="font-montserrat text-[15px] font-medium">
+            Add Exercise
+          </span>
+        </Button>
+      </div>
+
       {error && (
         <p className="mt-4 pl-2 font-montserrat text-sm text-red-400">
           {error}
@@ -245,21 +267,13 @@ export const AddTemplatesPage = () => {
               Full Card
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-5">
+          <CardContent className="max-h-[45vh] space-y-5 overflow-y-auto pr-2">
             <div className="space-y-3">
               <Input
                 className="w-full border-0 border-b border-white/20 rounded-none focus-visible:border-input focus-visible:ring-0 placeholder:font-space-mono"
                 placeholder="template name"
                 value={draft.title}
                 onChange={(event) => setDraftField("title", event.target.value)}
-              />
-              <Input
-                className="w-full border-0 border-b border-white/20 rounded-none focus-visible:border-input focus-visible:ring-0 placeholder:font-space-mono"
-                placeholder="description"
-                value={draft.description}
-                onChange={(event) =>
-                  setDraftField("description", event.target.value)
-                }
               />
             </div>
 
@@ -268,62 +282,78 @@ export const AddTemplatesPage = () => {
                 Add exercises to build this template.
               </p>
             ) : (
-              <Accordion
-                type="single"
-                collapsible
-                defaultValue={`week-${draft.selectedWeek}`}
-              >
-                {Object.entries(groupedExercises).map(([weekNumber, days]) => (
-                  <AccordionItem
-                    key={weekNumber}
-                    value={`week-${weekNumber}`}
-                    className="border-white/20"
-                  >
-                    <AccordionTrigger className=" text-[#fcfdff] hover:no-underline focus-visible:border-input focus-visible:ring-0 border-0 border-b border-white/20 rounded-none  ">
-                      <span className="font-montserrat">Week {weekNumber}</span>
-                    </AccordionTrigger>
-                    <AccordionContent className="space-y-5 mt-5">
-                      {Object.entries(days).map(([dayNumber, dayExercises]) => (
-                        <div key={dayNumber} className="space-y-2">
-                          <h3 className="font-space-mono text-sm text-white/70">
-                            {dayLabels[Number(dayNumber)] ?? dayNumber}
-                          </h3>
+              <div>
+                {groupedExerciseEntries.map(([weekNumber, days]) => {
+                  const numericWeek = Number(weekNumber);
+                  const isOpen = openWeek === numericWeek;
+                  const dayEntries = Object.entries(days).sort(
+                    ([dayA], [dayB]) => Number(dayA) - Number(dayB),
+                  );
 
-                          <div className="space-y-2">
-                            {dayExercises.map((exercise) => (
-                              <div
-                                key={exercise.localId}
-                                className="flex items-center justify-between gap-3 rounded-md border border-white/10 px-3 py-2"
-                              >
-                                <span className="font-space-mono text-sm text-[#fcfdff]">
-                                  {exercise.exercise} {exercise.sets}x
-                                  {exercise.reps} {exercise.kg ?? 0}kg
-                                </span>
+                  return (
+                    <div key={weekNumber} className="border-white/20">
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-between border-0 border-b border-white/20 py-4 font-montserrat font-normal text-[#fcfdff] focus-visible:border-input focus-visible:ring-0"
+                        style={{ fontFamily: "Montserrat, sans-serif" }}
+                        onClick={() => setOpenWeek(isOpen ? null : numericWeek)}
+                      >
+                        <span>Week {weekNumber}</span>
+                        <ChevronDown
+                          className={`size-4 transition-transform ${
+                            isOpen ? "rotate-180" : ""
+                          }`}
+                          aria-hidden="true"
+                        />
+                      </button>
 
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-xs"
-                                  aria-label={`Delete ${exercise.exercise}`}
-                                  className="text-white/50 hover:bg-white/10 hover:text-white focus-visible:border-input focus-visible:ring-0"
-                                  onClick={() =>
-                                    removeExerciseFromDraft(exercise.localId)
-                                  }
-                                >
-                                  <XIcon
-                                    className="size-3"
-                                    aria-hidden="true"
-                                  />
-                                </Button>
+                      {isOpen && (
+                        <div className="mt-5 space-y-6 pb-2">
+                          {dayEntries.map(([dayNumber, dayExercises]) => (
+                            <div key={dayNumber} className="space-y-2">
+                              <h3 className="font-space-mono text-sm text-white/70">
+                                {dayLabels[Number(dayNumber)] ?? dayNumber}
+                              </h3>
+
+                              <div className="space-y-2">
+                                {dayExercises.map((exercise) => (
+                                  <div
+                                    key={exercise.localId}
+                                    className="flex items-center justify-between gap-3 rounded-md border border-white/10 px-3 py-2"
+                                  >
+                                    <span className="font-space-mono text-sm text-[#fcfdff]">
+                                      {exercise.exercise} {exercise.sets}x
+                                      {exercise.reps} {exercise.kg ?? 0}kg
+                                    </span>
+
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon-xs"
+                                      aria-label={`Delete ${exercise.exercise}`}
+                                      className="text-white/50 hover:bg-white/10 hover:text-white focus-visible:border-input focus-visible:ring-0"
+                                      onClick={() =>
+                                        removeExerciseFromDraft(
+                                          exercise.localId,
+                                        )
+                                      }
+                                    >
+                                      <XIcon
+                                        className="size-3"
+                                        aria-hidden="true"
+                                      />
+                                    </Button>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </CardContent>
           <CardFooter className="flex justify-between border-t-0 bg-transparent">
