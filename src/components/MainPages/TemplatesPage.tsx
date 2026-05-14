@@ -9,6 +9,12 @@ const formatTemplateDate = (date: string) => {
   return new Intl.DateTimeFormat("uk-UA").format(new Date(date));
 };
 
+const getTemplateTotalTonnage = (
+  exercises: { kg?: number | null }[],
+) => {
+  return exercises.reduce((total, exercise) => total + (exercise.kg ?? 0), 0);
+};
+
 export const TemplatesPage = () => {
   const navigate = useNavigate();
   const templates = useTemplatesStore((state) => state.templates);
@@ -55,9 +61,9 @@ export const TemplatesPage = () => {
             <CardTemplate
               key={template.id}
               title={template.title}
-              cardDescription={template.description}
               cardDate={formatTemplateDate(template.createdAt)}
               exerciseCount={template.exercises.length}
+              totalTonnage={getTemplateTotalTonnage(template.exercises)}
               onDelete={() => deleteTemplate(template.id)}
             />
           ))
