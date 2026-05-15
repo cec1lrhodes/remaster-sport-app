@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TemplatesRouteImport } from './routes/templates'
+import { Route as JournalRouteImport } from './routes/journal'
 import { Route as Add_templatesRouteImport } from './routes/add_templates'
 import { Route as IndexRouteImport } from './routes/index'
 
 const TemplatesRoute = TemplatesRouteImport.update({
   id: '/templates',
   path: '/templates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JournalRoute = JournalRouteImport.update({
+  id: '/journal',
+  path: '/journal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Add_templatesRoute = Add_templatesRouteImport.update({
@@ -32,30 +38,34 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/add_templates': typeof Add_templatesRoute
+  '/journal': typeof JournalRoute
   '/templates': typeof TemplatesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/add_templates': typeof Add_templatesRoute
+  '/journal': typeof JournalRoute
   '/templates': typeof TemplatesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/add_templates': typeof Add_templatesRoute
+  '/journal': typeof JournalRoute
   '/templates': typeof TemplatesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/add_templates' | '/templates'
+  fullPaths: '/' | '/add_templates' | '/journal' | '/templates'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/add_templates' | '/templates'
-  id: '__root__' | '/' | '/add_templates' | '/templates'
+  to: '/' | '/add_templates' | '/journal' | '/templates'
+  id: '__root__' | '/' | '/add_templates' | '/journal' | '/templates'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   Add_templatesRoute: typeof Add_templatesRoute
+  JournalRoute: typeof JournalRoute
   TemplatesRoute: typeof TemplatesRoute
 }
 
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/templates'
       fullPath: '/templates'
       preLoaderRoute: typeof TemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/journal': {
+      id: '/journal'
+      path: '/journal'
+      fullPath: '/journal'
+      preLoaderRoute: typeof JournalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/add_templates': {
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   Add_templatesRoute: Add_templatesRoute,
+  JournalRoute: JournalRoute,
   TemplatesRoute: TemplatesRoute,
 }
 export const routeTree = rootRouteImport

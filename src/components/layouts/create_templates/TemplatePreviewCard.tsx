@@ -60,7 +60,7 @@ export const TemplatePreviewCard = ({
 
   return (
     <div className="mt-10">
-      <Card className="rounded-[10px] border border-white/20 bg-transparent ring-0 ">
+      <Card className="rounded-[10px] border border-none bg-[#1a1a1a] ring-0 ">
         <CardHeader>
           <CardTitle className="font-space-grotesk text-[#fcfdff]">
             Full Card
