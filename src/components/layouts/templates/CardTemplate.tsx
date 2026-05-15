@@ -23,6 +23,7 @@ interface CardTemplateProps {
   cardDate: string;
   exerciseCount: number;
   totalTonnage: number;
+  onOpen?: () => void;
   onDelete: () => void;
 }
 
@@ -32,17 +33,34 @@ export const CardTemplate = ({
   cardDate,
   exerciseCount,
   totalTonnage,
+  onOpen,
   onDelete,
 }: CardTemplateProps) => {
   return (
     <div>
-      <Card className="gap-3 border-0 bg-[#1a1a1a] ring-0">
+      <Card
+        role={onOpen ? "button" : undefined}
+        tabIndex={onOpen ? 0 : undefined}
+        className="gap-3 border-0 bg-[#1a1a1a] ring-0 transition-colors hover:bg-[#222222] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
+        onClick={onOpen}
+        onKeyDown={(event) => {
+          if (!onOpen || (event.key !== "Enter" && event.key !== " ")) {
+            return;
+          }
+
+          event.preventDefault();
+          onOpen();
+        }}
+      >
         <CardHeader className="items-center">
           <CardTitle className="justify-self-start text-left font-space-mono">
             {title}
           </CardTitle>
 
-          <CardAction>
+          <CardAction
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button type="button" variant="ghost" size="icon-sm">

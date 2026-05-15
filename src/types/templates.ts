@@ -55,3 +55,10 @@ export type TemplateDraft = {
   currentKg: string;
   exercises: DraftTemplateExercise[];
 };
+
+/** Локальні записи виконання в журналі (до синку з WorkoutSession на бекенді). */
+export type JournalExerciseLog = {
+  reps: string;
+  sets: string;
+  kg: string;
+};

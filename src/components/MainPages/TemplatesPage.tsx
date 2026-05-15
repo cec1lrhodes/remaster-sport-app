@@ -22,6 +22,9 @@ export const TemplatesPage = () => {
   const error = useTemplatesStore((state) => state.error);
   const fetchTemplates = useTemplatesStore((state) => state.fetchTemplates);
   const deleteTemplate = useTemplatesStore((state) => state.deleteTemplate);
+  const setSelectedTemplateId = useTemplatesStore(
+    (state) => state.setSelectedTemplateId,
+  );
 
   useEffect(() => {
     fetchTemplates();
@@ -64,6 +67,10 @@ export const TemplatesPage = () => {
               cardDate={formatTemplateDate(template.createdAt)}
               exerciseCount={template.exercises.length}
               totalTonnage={getTemplateTotalTonnage(template.exercises)}
+              onOpen={() => {
+                setSelectedTemplateId(template.id);
+                navigate({ to: "/journal" });
+              }}
               onDelete={() => deleteTemplate(template.id)}
             />
           ))

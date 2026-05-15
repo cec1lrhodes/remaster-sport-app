@@ -4,6 +4,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { templatesApi } from "@/api/templatesApi";
 import type {
   CreateTemplatePayload,
+  JournalExerciseLog,
   Template,
   TemplateDraft,
 } from "@/types/templates";
@@ -23,6 +24,8 @@ const initialDraft: TemplateDraft = {
 
 type TemplatesState = {
   templates: Template[];
+  selectedTemplateId: string | null;
+  journalLogs: Record<string, JournalExerciseLog>;
   draft: TemplateDraft;
   isLoading: boolean;
   isCreating: boolean;
@@ -30,6 +33,12 @@ type TemplatesState = {
   fetchTemplates: () => Promise<void>;
   createTemplate: () => Promise<Template | null>;
   deleteTemplate: (templateId: string) => Promise<void>;
+  setSelectedTemplateId: (templateId: string) => void;
+  setJournalLogField: (
+    templateExerciseId: string,
+    field: keyof JournalExerciseLog,
+    value: string,
+  ) => void;
   setDraftField: <Key extends keyof TemplateDraft>(
     field: Key,
     value: TemplateDraft[Key],
@@ -63,6 +72,21 @@ const toOptionalNonNegativeNumber = (value: string) => {
   return parsed;
 };
 
+const pruneJournalLogsToTemplates = (
+  logs: Record<string, JournalExerciseLog>,
+  templates: Template[],
+) => {
+  const validIds = new Set(
+    templates.flatMap((template) =>
+      template.exercises.map((exercise) => exercise.id),
+    ),
+  );
+
+  return Object.fromEntries(
+    Object.entries(logs).filter(([exerciseId]) => validIds.has(exerciseId)),
+  );
+};
+
 const createPayloadFromDraft = (
   draft: TemplateDraft,
 ): CreateTemplatePayload | null => {
@@ -94,6 +118,8 @@ export const useTemplatesStore = create<TemplatesState>()(
   persist(
     (set, get) => ({
       templates: [],
+      selectedTemplateId: null,
+      journalLogs: {},
       draft: initialDraft,
       isLoading: false,
       isCreating: false,
@@ -104,7 +130,14 @@ export const useTemplatesStore = create<TemplatesState>()(
 
         try {
           const templates = await templatesApi.getTemplates();
-          set({ templates, isLoading: false });
+          set((state) => ({
+            templates,
+            isLoading: false,
+            journalLogs: pruneJournalLogsToTemplates(
+              state.journalLogs,
+              templates,
+            ),
+          }));
         } catch (error) {
           set({
             error:
@@ -153,11 +186,32 @@ export const useTemplatesStore = create<TemplatesState>()(
 
         try {
           await templatesApi.deleteTemplate(templateId);
-          set((state) => ({
-            templates: state.templates.filter(
+          set((state) => {
+            const removed = state.templates.find(
+              (template) => template.id === templateId,
+            );
+            const removedExerciseIds = new Set(
+              removed?.exercises.map((exercise) => exercise.id) ?? [],
+            );
+            const journalLogs = Object.fromEntries(
+              Object.entries(state.journalLogs).filter(
+                ([exerciseId]) => !removedExerciseIds.has(exerciseId),
+              ),
+            );
+
+            const templates = state.templates.filter(
               (template) => template.id !== templateId,
-            ),
-          }));
+            );
+
+            return {
+              templates,
+              journalLogs,
+              selectedTemplateId:
+                state.selectedTemplateId === templateId
+                  ? null
+                  : state.selectedTemplateId,
+            };
+          });
         } catch (error) {
           set({
             error:
@@ -166,6 +220,31 @@ export const useTemplatesStore = create<TemplatesState>()(
                 : "Failed to delete template",
           });
         }
+      },
+
+      setSelectedTemplateId(templateId) {
+        set({ selectedTemplateId: templateId, error: null });
+      },
+
+      setJournalLogField(templateExerciseId, field, value) {
+        set((state) => {
+          const prev = state.journalLogs[templateExerciseId] ?? {
+            reps: "",
+            sets: "",
+            kg: "",
+          };
+
+          return {
+            journalLogs: {
+              ...state.journalLogs,
+              [templateExerciseId]: {
+                ...prev,
+                [field]: value,
+              },
+            },
+            error: null,
+          };
+        });
       },
 
       setDraftField(field, value) {
@@ -242,7 +321,11 @@ export const useTemplatesStore = create<TemplatesState>()(
     {
       name: "remaster-sport-template-draft",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ draft: state.draft }),
+      partialize: (state) => ({
+        draft: state.draft,
+        selectedTemplateId: state.selectedTemplateId,
+        journalLogs: state.journalLogs,
+      }),
     },
   ),
 );
