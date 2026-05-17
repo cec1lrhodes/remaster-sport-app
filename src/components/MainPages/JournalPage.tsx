@@ -13,6 +13,7 @@ import {
 import { Input } from "@/ui/input";
 import { useTemplatesStore } from "@/store/templatesStore";
 import type { JournalExerciseLog, TemplateExercise } from "@/types/templates";
+import { EmptyJournal } from "@/components/layouts/journal/EmptyJournal";
 
 const dayLabels: Record<number, string> = {
   1: "A",
@@ -111,6 +112,7 @@ export const JournalPage = () => {
     return templates.find((template) => template.id === selectedTemplateId);
   }, [selectedTemplateId, templates]);
 
+  // Трансформація даних — групування вправ по тижнях/днях і підрахунок завершених
   const completedExerciseCount = useMemo(() => {
     if (!selectedTemplate) {
       return 0;
@@ -139,6 +141,7 @@ export const JournalPage = () => {
 
   return (
     <div>
+      {/* HEADER */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-space-grotesk text-[#fcfdff]">Journal</h1>
       </div>
@@ -153,25 +156,10 @@ export const JournalPage = () => {
         </p>
       )}
 
-      {!isLoading && !selectedTemplate && (
-        <Card className="mt-8 rounded-[10px] border-0 bg-[#1a1a1a] ring-0">
-          <CardHeader>
-            <CardTitle className="font-space-grotesk text-[#fcfdff]">
-              No program selected
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="font-space-mono text-sm text-white/50">
-              Choose a training template first to see weeks and training days
-              here.
-            </p>
-            <Button asChild className="bg-white text-black">
-              <Link to="/templates">Open Templates</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      {/* EMPTY */}
+      {!isLoading && !selectedTemplate && <EmptyJournal />}
 
+      {/* JOURNAL */}
       {!isLoading && selectedTemplate && (
         <Card className="mt-8 rounded-[10px] border-0 bg-[#1a1a1a] ring-0">
           <CardHeader>
@@ -202,7 +190,7 @@ export const JournalPage = () => {
                     <span>Week {weekNumber}</span>
                     <ChevronDown
                       className={`size-4 transition-transform ${
-                        isWeekOpen ? "rotate-180" : ""
+                        isWeekOpen ? "rotate-90" : ""
                       }`}
                       aria-hidden="true"
                     />
@@ -221,9 +209,9 @@ export const JournalPage = () => {
                           );
                           const toneClasses =
                             tone === "green"
-                              ? "border-green-500/55 bg-green-950/45 text-green-100"
+                              ? "border-none bg-[#003c33] text-white"
                               : tone === "orange"
-                                ? "border-orange-500/55 bg-orange-950/45 text-orange-100"
+                                ? "border-none bg-[#a9583e] text-white"
                                 : "border-white/10 text-white/70 hover:bg-white/10 hover:text-white";
 
                           return (
