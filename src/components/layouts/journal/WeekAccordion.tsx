@@ -1,9 +1,11 @@
 import { ChevronDown } from "lucide-react";
 import { DaySelector } from "./DaySelector";
+import { DayExecutionDatePicker } from "./DayExecutionDatePicker";
 import { OpenDayCard } from "./OpenDayCard";
 import type { JournalExerciseLog, TemplateExercise } from "@/types/templates";
 
 interface Props {
+  templateId: string;
   weekNumber: number;
   days: Record<number, TemplateExercise[]>;
   isOpen: boolean;
@@ -19,6 +21,7 @@ interface Props {
 }
 
 export const WeekAccordion = ({
+  templateId,
   weekNumber,
   days,
   isOpen,
@@ -36,6 +39,7 @@ export const WeekAccordion = ({
       onClick={() => onWeekToggle(weekNumber)}
     >
       <span>Week {weekNumber}</span>
+
       <ChevronDown
         className={`size-4 transition-transform ${isOpen ? "rotate-90" : ""}`}
         aria-hidden="true"
@@ -53,6 +57,12 @@ export const WeekAccordion = ({
 
         {openDay && days[openDay] && (
           <div className="space-y-3">
+            <DayExecutionDatePicker
+              templateId={templateId}
+              weekNumber={weekNumber}
+              dayNumber={openDay}
+            />
+
             {days[openDay].map((exercise) => (
               <OpenDayCard
                 key={exercise.id}

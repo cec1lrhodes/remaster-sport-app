@@ -1,3 +1,5 @@
+import { format } from "date-fns";
+
 import type { JournalExerciseLog, TemplateExercise } from "@/types/templates";
 
 export type DayTone = "neutral" | "green" | "orange";
@@ -56,6 +58,26 @@ export const getDayTone = (
   );
   return allMatchTarget ? "green" : "neutral";
 };
+
+/** Ключ дати виконання дня в журналі: templateId:week:day */
+export const journalDayDateKey = (
+  templateId: string,
+  weekNumber: number,
+  dayNumber: number,
+) => `${templateId}:${weekNumber}:${dayNumber}`;
+
+export const parseJournalDate = (iso: string): Date => {
+  const [year, month, day] = iso.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
+export const toJournalDateIso = (date: Date) => format(date, "yyyy-MM-dd");
+
+export const formatJournalDate = (iso: string) =>
+  parseJournalDate(iso).toLocaleDateString("uk-UA", {
+    day: "numeric",
+    month: "short",
+  });
 
 export const groupExercisesByWeekAndDay = (
   exercises: TemplateExercise[],

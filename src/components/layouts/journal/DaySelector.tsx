@@ -47,6 +47,11 @@ export const DaySelector = ({
           </button>
         );
       })}
+      {/* <div className="flex items-center justify-center">
+        <Button variant="secondary" className="border-none">
+          notes
+        </Button>
+      </div> */}
     </div>
   );
 };

@@ -14,6 +14,7 @@ import {
   isJournalLogComplete,
 } from "@/utils/journalUtils";
 import { WeekAccordion } from "@/components/layouts/journal/WeekAccordion";
+import { CalendarSection } from "@/components/layouts/journal/CalendarSection";
 
 export const JournalPage = () => {
   const [openWeek, setOpenWeek] = useState<number | null>(null);
@@ -82,41 +83,46 @@ export const JournalPage = () => {
 
       {/* JOURNAL */}
       {!isLoading && selectedTemplate && (
-        <Card className="mt-8 rounded-[10px] border-0 bg-[#1a1a1a] ring-0">
-          <CardHeader>
-            <CardTitle className="font-space-grotesk text-[#fcfdff]">
-              {selectedTemplate.title}
-            </CardTitle>
-          </CardHeader>
+        <>
+          <Card className="mt-8 rounded-[10px] border-0 bg-[#1a1a1a] ring-0">
+            <CardHeader>
+              <CardTitle className="font-space-grotesk text-[#fcfdff]">
+                {selectedTemplate.title}
+              </CardTitle>
+            </CardHeader>
 
-          <CardContent className="max-h-[65vh] space-y-5 overflow-y-auto pr-2">
-            {groupedWeeks.map(([weekNumber, days]) => {
-              const numericWeek = Number(weekNumber);
-              return (
-                <WeekAccordion
-                  key={weekNumber}
-                  weekNumber={numericWeek}
-                  days={days}
-                  isOpen={openWeek === numericWeek}
-                  openDay={openDay}
-                  logs={journalLogs}
-                  onWeekToggle={handleWeekToggle}
-                  onDayToggle={handleDayToggle}
-                  onFieldChange={setJournalLogField}
-                />
-              );
-            })}
-          </CardContent>
+            <CardContent className="max-h-[65vh] space-y-5 overflow-y-auto pr-2">
+              {groupedWeeks.map(([weekNumber, days]) => {
+                const numericWeek = Number(weekNumber);
+                return (
+                  <WeekAccordion
+                    key={weekNumber}
+                    templateId={selectedTemplate.id}
+                    weekNumber={numericWeek}
+                    days={days}
+                    isOpen={openWeek === numericWeek}
+                    openDay={openDay}
+                    logs={journalLogs}
+                    onWeekToggle={handleWeekToggle}
+                    onDayToggle={handleDayToggle}
+                    onFieldChange={setJournalLogField}
+                  />
+                );
+              })}
+            </CardContent>
 
-          <CardFooter className="relative flex items-center justify-between border-t-0 bg-transparent">
-            <span className="font-space-mono text-sm text-white/50">
-              {selectedTemplate.exercises.length} exercises
-            </span>
-            <span className="absolute bottom-3 right-4 font-space-mono text-sm tabular-nums text-white/80">
-              {completedCount}/{selectedTemplate.exercises.length}
-            </span>
-          </CardFooter>
-        </Card>
+            <CardFooter className="relative flex items-center justify-between border-t-0 bg-transparent">
+              <span className="font-space-mono text-sm text-white/50">
+                {selectedTemplate.exercises.length} exercises
+              </span>
+              <span className="absolute bottom-3 right-4 font-space-mono text-sm tabular-nums text-white/80">
+                {completedCount}/{selectedTemplate.exercises.length}
+              </span>
+            </CardFooter>
+          </Card>
+
+          <CalendarSection className="mt-8" />
+        </>
       )}
     </div>
   );

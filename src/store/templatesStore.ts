@@ -8,6 +8,7 @@ import type {
   Template,
   TemplateDraft,
 } from "@/types/templates";
+import { journalDayDateKey } from "@/utils/journalUtils";
 
 const initialDraft: TemplateDraft = {
   title: "",
@@ -26,6 +27,8 @@ type TemplatesState = {
   templates: Template[];
   selectedTemplateId: string | null;
   journalLogs: Record<string, JournalExerciseLog>;
+  /** ISO YYYY-MM-DD, ключ — journalDayDateKey */
+  journalDayDates: Record<string, string>;
   draft: TemplateDraft;
   isLoading: boolean;
   isCreating: boolean;
@@ -38,6 +41,12 @@ type TemplatesState = {
     templateExerciseId: string,
     field: keyof JournalExerciseLog,
     value: string,
+  ) => void;
+  setJournalDayDate: (
+    templateId: string,
+    weekNumber: number,
+    dayNumber: number,
+    dateIso: string | null,
   ) => void;
   setDraftField: <Key extends keyof TemplateDraft>(
     field: Key,
@@ -87,6 +96,19 @@ const pruneJournalLogsToTemplates = (
   );
 };
 
+const pruneJournalDayDatesToTemplates = (
+  dates: Record<string, string>,
+  templates: Template[],
+) => {
+  const validPrefixes = templates.map((template) => `${template.id}:`);
+
+  return Object.fromEntries(
+    Object.entries(dates).filter(([key]) =>
+      validPrefixes.some((prefix) => key.startsWith(prefix)),
+    ),
+  );
+};
+
 const createPayloadFromDraft = (
   draft: TemplateDraft,
 ): CreateTemplatePayload | null => {
@@ -120,6 +142,7 @@ export const useTemplatesStore = create<TemplatesState>()(
       templates: [],
       selectedTemplateId: null,
       journalLogs: {},
+      journalDayDates: {},
       draft: initialDraft,
       isLoading: false,
       isCreating: false,
@@ -135,6 +158,10 @@ export const useTemplatesStore = create<TemplatesState>()(
             isLoading: false,
             journalLogs: pruneJournalLogsToTemplates(
               state.journalLogs,
+              templates,
+            ),
+            journalDayDates: pruneJournalDayDatesToTemplates(
+              state.journalDayDates,
               templates,
             ),
           }));
@@ -198,6 +225,12 @@ export const useTemplatesStore = create<TemplatesState>()(
                 ([exerciseId]) => !removedExerciseIds.has(exerciseId),
               ),
             );
+            const templatePrefix = `${templateId}:`;
+            const journalDayDates = Object.fromEntries(
+              Object.entries(state.journalDayDates).filter(
+                ([key]) => !key.startsWith(templatePrefix),
+              ),
+            );
 
             const templates = state.templates.filter(
               (template) => template.id !== templateId,
@@ -206,6 +239,7 @@ export const useTemplatesStore = create<TemplatesState>()(
             return {
               templates,
               journalLogs,
+              journalDayDates,
               selectedTemplateId:
                 state.selectedTemplateId === templateId
                   ? null
@@ -244,6 +278,22 @@ export const useTemplatesStore = create<TemplatesState>()(
             },
             error: null,
           };
+        });
+      },
+
+      setJournalDayDate(templateId, weekNumber, dayNumber, dateIso) {
+        const key = journalDayDateKey(templateId, weekNumber, dayNumber);
+
+        set((state) => {
+          const journalDayDates = { ...state.journalDayDates };
+
+          if (dateIso) {
+            journalDayDates[key] = dateIso;
+          } else {
+            delete journalDayDates[key];
+          }
+
+          return { journalDayDates, error: null };
         });
       },
 
@@ -325,6 +375,7 @@ export const useTemplatesStore = create<TemplatesState>()(
         draft: state.draft,
         selectedTemplateId: state.selectedTemplateId,
         journalLogs: state.journalLogs,
+        journalDayDates: state.journalDayDates,
       }),
     },
   ),
