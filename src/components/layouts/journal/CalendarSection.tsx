@@ -1,29 +1,44 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { uk } from "react-day-picker/locale";
 
 import { Calendar } from "@/ui/calendar";
 import { Card, CardContent } from "@/ui/card";
 import { cn } from "@/lib/utils";
 import { useTemplatesStore } from "@/store/templatesStore";
-import { parseJournalDate } from "@/utils/journalUtils";
+import {
+  DAY_TONE_CALENDAR_CLASSES,
+  getTemplateWorkoutDatesByTone,
+} from "@/utils/journalUtils";
 
 interface CalendarSectionProps {
+  templateId: string;
   className?: string;
 }
 
-export const CalendarSection = ({ className }: CalendarSectionProps) => {
-  const selectedTemplateId = useTemplatesStore((s) => s.selectedTemplateId);
+export const CalendarSection = ({
+  templateId,
+  className,
+}: CalendarSectionProps) => {
   const journalDayDates = useTemplatesStore((s) => s.journalDayDates);
-  const [focusedDate, setFocusedDate] = useState<Date | undefined>();
+  const journalLogs = useTemplatesStore((s) => s.journalLogs);
+  const templateExercises = useTemplatesStore(
+    (s) =>
+      s.templates.find((template) => template.id === templateId)?.exercises,
+  );
 
-  const workoutDates = useMemo(() => {
-    if (!selectedTemplateId) return [];
+  const { green, orange, neutral, all } = useMemo(() => {
+    const tones = getTemplateWorkoutDatesByTone(
+      templateId,
+      journalDayDates,
+      templateExercises ?? [],
+      journalLogs,
+    );
 
-    const prefix = `${selectedTemplateId}:`;
-
-    return Object.entries(journalDayDates)
-      .filter(([key]) => key.startsWith(prefix))
-      .map(([, iso]) => parseJournalDate(iso));
-  }, [journalDayDates, selectedTemplateId]);
+    return {
+      ...tones,
+      all: [...tones.green, ...tones.orange, ...tones.neutral],
+    };
+  }, [journalDayDates, journalLogs, templateExercises, templateId]);
 
   return (
     <Card
@@ -34,20 +49,23 @@ export const CalendarSection = ({ className }: CalendarSectionProps) => {
     >
       <CardContent className="p-0">
         <Calendar
-          mode="single"
-          selected={focusedDate}
-          onSelect={setFocusedDate}
-          modifiers={{ workout: workoutDates }}
+          mode="multiple"
+          locale={uk}
+          selected={all}
+          onSelect={() => undefined}
+          modifiers={{
+            onTarget: green,
+            mismatch: orange,
+            scheduled: neutral,
+          }}
           modifiersClassNames={{
-            workout:
-              "relative after:absolute after:bottom-1 after:left-1/2 after:size-1 after:-translate-x-1/2 after:rounded-full after:bg-primary",
+            onTarget: DAY_TONE_CALENDAR_CLASSES.green,
+            mismatch: DAY_TONE_CALENDAR_CLASSES.orange,
+            scheduled: DAY_TONE_CALENDAR_CLASSES.neutral,
           }}
           className="w-full bg-[#1a1a1a] p-3 [--cell-size:--spacing(9)]"
           classNames={{
             root: "w-full",
-            months: "w-full",
-            month: "w-full max-w-none",
-            month_grid: "w-full",
           }}
         />
       </CardContent>

@@ -1,8 +1,16 @@
 import type { JournalExerciseLog, TemplateExercise } from "@/types/templates";
 import type { DayTone } from "@/utils/journalUtils";
-import { DAY_LABELS, getDayTone } from "@/utils/journalUtils";
+import {
+  DAY_LABELS,
+  formatJournalDate,
+  getDayTone,
+  getJournalDayDateIso,
+} from "@/utils/journalUtils";
+import { useTemplatesStore } from "@/store/templatesStore";
 
 interface DaySelectorProps {
+  templateId: string;
+  weekNumber: number;
   days: Record<number, TemplateExercise[]>;
   openDay: number | null;
   logs: Record<string, JournalExerciseLog>;
@@ -19,39 +27,54 @@ const TONE_CLASSES: Record<DayTone, string> = {
 };
 
 export const DaySelector = ({
+  templateId,
+  weekNumber,
   days,
   openDay,
   logs,
   onDayToggle,
 }: DaySelectorProps) => {
+  const journalDayDates = useTemplatesStore((s) => s.journalDayDates);
+
   const dayEntries = Object.entries(days).sort(
     ([dayA], [dayB]) => Number(dayA) - Number(dayB),
   );
+
   return (
     <div className="grid grid-cols-3 gap-3">
       {dayEntries.map(([dayNumber]) => {
         const numericDay = Number(dayNumber);
         const isActive = openDay === numericDay;
         const tone = getDayTone(days[numericDay] ?? [], logs);
+        const dateIso = getJournalDayDateIso(
+          templateId,
+          weekNumber,
+          numericDay,
+          journalDayDates,
+        );
 
         return (
           <button
             key={dayNumber}
             type="button"
-            className={`rounded-md border px-3 py-2 font-space-mono text-sm transition-colors ${
+            className={`flex flex-col items-center gap-0.5 rounded-md border px-3 py-2 font-space-mono text-sm transition-colors ${
               isActive ? ACTIVE_CLASS : TONE_CLASSES[tone]
             }`}
             onClick={() => onDayToggle(numericDay)}
           >
-            Day {DAY_LABELS[numericDay] ?? dayNumber}
+            <span>Day {DAY_LABELS[numericDay] ?? dayNumber}</span>
+            {dateIso && (
+              <span
+                className={`text-[10px] ${
+                  isActive ? "text-black/60" : "text-white/50"
+                }`}
+              >
+                {formatJournalDate(dateIso)}
+              </span>
+            )}
           </button>
         );
       })}
-      {/* <div className="flex items-center justify-center">
-        <Button variant="secondary" className="border-none">
-          notes
-        </Button>
-      </div> */}
     </div>
   );
 };

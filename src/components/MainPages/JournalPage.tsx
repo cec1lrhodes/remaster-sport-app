@@ -121,7 +121,7 @@ export const JournalPage = () => {
             </CardFooter>
           </Card>
 
-          <CalendarSection className="mt-8" />
+          <CalendarSection templateId={selectedTemplate.id} className="mt-8" />
         </>
       )}
     </div>

@@ -49,6 +49,8 @@ export const WeekAccordion = ({
     {isOpen && (
       <div className="mt-5 space-y-4 pb-2">
         <DaySelector
+          templateId={templateId}
+          weekNumber={weekNumber}
           days={days}
           openDay={openDay}
           logs={logs}
