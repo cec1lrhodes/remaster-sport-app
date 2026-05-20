@@ -5,7 +5,7 @@ import { uk } from "react-day-picker/locale";
 import { Button } from "@/ui/button";
 import { Calendar } from "@/ui/calendar";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/ui/dialog";
-import { useTemplatesStore } from "@/store/templatesStore";
+import { useJournal } from "@/store/templates/hooks/useJournal";
 import {
   DAY_LABELS,
   formatJournalDate,
@@ -27,8 +27,8 @@ export const DayExecutionDatePicker = ({
 }: DayExecutionDatePickerProps) => {
   const [open, setOpen] = useState(false);
   const dateKey = journalDayDateKey(templateId, weekNumber, dayNumber);
-  const dateIso = useTemplatesStore((s) => s.journalDayDates[dateKey]);
-  const setJournalDayDate = useTemplatesStore((s) => s.setJournalDayDate);
+  const { journalDayDates, setJournalDayDate } = useJournal();
+  const dateIso = journalDayDates[dateKey];
 
   const dayLabel = DAY_LABELS[dayNumber] ?? String(dayNumber);
   const selectedDate = dateIso ? parseJournalDate(dateIso) : undefined;

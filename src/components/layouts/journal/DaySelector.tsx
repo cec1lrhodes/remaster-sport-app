@@ -6,7 +6,7 @@ import {
   getDayTone,
   getJournalDayDateIso,
 } from "@/utils/journalUtils";
-import { useTemplatesStore } from "@/store/templatesStore";
+import { useJournal } from "@/store/templates/hooks/useJournal";
 
 interface DaySelectorProps {
   templateId: string;
@@ -34,7 +34,7 @@ export const DaySelector = ({
   logs,
   onDayToggle,
 }: DaySelectorProps) => {
-  const journalDayDates = useTemplatesStore((s) => s.journalDayDates);
+  const { journalDayDates } = useJournal();
 
   const dayEntries = Object.entries(days).sort(
     ([dayA], [dayB]) => Number(dayA) - Number(dayB),

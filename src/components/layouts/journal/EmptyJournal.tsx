@@ -15,7 +15,9 @@ export const EmptyJournal = () => {
           Choose a training template first to see weeks and training days here.
         </p>
         <Button asChild className="bg-white text-black">
-          <Link to="/templates">Open Templates</Link>
+          <Link to="/templates">
+            <span className="font-montserrat text-black">Open Templates</span>
+          </Link>
         </Button>
       </CardContent>
     </Card>

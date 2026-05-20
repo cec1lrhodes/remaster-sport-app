@@ -4,22 +4,20 @@ import { Link, useNavigate } from "@tanstack/react-router";
 
 import { TemplateExerciseForm } from "@/components/layouts/create_templates/CreateTemplates";
 import { TemplatePreviewCard } from "@/components/layouts/create_templates/TemplatePreviewCard";
-import { useTemplatesStore } from "@/store/templatesStore";
+import { useTemplateDraft } from "@/store/templates/hooks/useTemplateDraft";
 
 export const AddTemplatesPage = () => {
   const navigate = useNavigate();
   const [openWeek, setOpenWeek] = useState<number | null>(null);
-  const draft = useTemplatesStore((state) => state.draft);
-  const error = useTemplatesStore((state) => state.error);
-  const isCreating = useTemplatesStore((state) => state.isCreating);
-  const setDraftField = useTemplatesStore((state) => state.setDraftField);
-  const addExerciseToDraft = useTemplatesStore(
-    (state) => state.addExerciseToDraft,
-  );
-  const removeExerciseFromDraft = useTemplatesStore(
-    (state) => state.removeExerciseFromDraft,
-  );
-  const createTemplate = useTemplatesStore((state) => state.createTemplate);
+  const {
+    draft,
+    error,
+    isCreating,
+    setDraftField,
+    addExerciseToDraft,
+    removeExerciseFromDraft,
+    createTemplate,
+  } = useTemplateDraft();
 
   const selectedExercise = draft.customExercise.trim() || draft.currentExercise;
 

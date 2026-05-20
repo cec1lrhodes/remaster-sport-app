@@ -7,26 +7,40 @@ import {
   CardContent,
   CardFooter,
 } from "@/ui/card";
-import { useTemplatesStore } from "@/store/templatesStore";
+
 import { EmptyJournal } from "@/components/layouts/journal/EmptyJournal";
+
 import {
   groupExercisesByWeekAndDay,
   isJournalLogComplete,
 } from "@/utils/journalUtils";
+
 import { WeekAccordion } from "@/components/layouts/journal/WeekAccordion";
+
 import { CalendarSection } from "@/components/layouts/journal/CalendarSection";
+
+import { useJournal } from "@/store/templates/hooks/useJournal";
 
 export const JournalPage = () => {
   const [openWeek, setOpenWeek] = useState<number | null>(null);
+
   const [openDay, setOpenDay] = useState<number | null>(null);
 
-  const templates = useTemplatesStore((s) => s.templates);
-  const selectedTemplateId = useTemplatesStore((s) => s.selectedTemplateId);
-  const journalLogs = useTemplatesStore((s) => s.journalLogs);
-  const setJournalLogField = useTemplatesStore((s) => s.setJournalLogField);
-  const isLoading = useTemplatesStore((s) => s.isLoading);
-  const error = useTemplatesStore((s) => s.error);
-  const fetchTemplates = useTemplatesStore((s) => s.fetchTemplates);
+  const {
+    templates,
+
+    selectedTemplate,
+
+    journalLogs,
+
+    setJournalLogField,
+
+    isLoading,
+
+    error,
+
+    fetchTemplates,
+  } = useJournal();
 
   useEffect(() => {
     if (templates.length === 0) {
@@ -34,26 +48,24 @@ export const JournalPage = () => {
     }
   }, [fetchTemplates, templates.length]);
 
-  const selectedTemplate = useMemo(() => {
-    return templates.find((template) => template.id === selectedTemplateId);
-  }, [selectedTemplateId, templates]);
-
-  // Трансформація даних — групування вправ по тижнях/днях і підрахунок завершених
   const completedCount = useMemo(
     () =>
       selectedTemplate?.exercises.filter((ex) =>
         isJournalLogComplete(journalLogs[ex.id]),
       ).length ?? 0,
+
     [journalLogs, selectedTemplate],
   );
 
   const groupedWeeks = useMemo(
     () => groupExercisesByWeekAndDay(selectedTemplate?.exercises ?? []),
+
     [selectedTemplate?.exercises],
   );
 
   const handleWeekToggle = (week: number) => {
     setOpenWeek((prev) => (prev === week ? null : week));
+
     setOpenDay(null);
   };
 
@@ -64,6 +76,7 @@ export const JournalPage = () => {
   return (
     <div>
       {/* HEADER */}
+
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-space-grotesk text-[#fcfdff]">Journal</h1>
       </div>
@@ -79,9 +92,11 @@ export const JournalPage = () => {
       )}
 
       {/* EMPTY */}
+
       {!isLoading && !selectedTemplate && <EmptyJournal />}
 
       {/* JOURNAL */}
+
       {!isLoading && selectedTemplate && (
         <>
           <Card className="mt-8 rounded-[10px] border-0 bg-[#1a1a1a] ring-0">
@@ -94,6 +109,7 @@ export const JournalPage = () => {
             <CardContent className="max-h-[65vh] space-y-5 overflow-y-auto pr-2">
               {groupedWeeks.map(([weekNumber, days]) => {
                 const numericWeek = Number(weekNumber);
+
                 return (
                   <WeekAccordion
                     key={weekNumber}
@@ -115,6 +131,7 @@ export const JournalPage = () => {
               <span className="font-space-mono text-sm text-white/50">
                 {selectedTemplate.exercises.length} exercises
               </span>
+
               <span className="absolute bottom-3 right-4 font-space-mono text-sm tabular-nums text-white/80">
                 {completedCount}/{selectedTemplate.exercises.length}
               </span>

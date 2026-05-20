@@ -1,30 +1,30 @@
 import { useEffect } from "react";
+
 import { useNavigate } from "@tanstack/react-router";
 
 import { Button } from "@/ui/button";
+
 import { CardTemplate } from "@/components/layouts/templates/CardTemplate";
-import { useTemplatesStore } from "@/store/templatesStore";
+
+import { useJournal } from "@/store/templates/hooks/useJournal";
+
+import { useTemplateList } from "@/store/templates/hooks/useTemplateList";
 
 const formatTemplateDate = (date: string) => {
   return new Intl.DateTimeFormat("uk-UA").format(new Date(date));
 };
 
-const getTemplateTotalTonnage = (
-  exercises: { kg?: number | null }[],
-) => {
+const getTemplateTotalTonnage = (exercises: { kg?: number | null }[]) => {
   return exercises.reduce((total, exercise) => total + (exercise.kg ?? 0), 0);
 };
 
 export const TemplatesPage = () => {
   const navigate = useNavigate();
-  const templates = useTemplatesStore((state) => state.templates);
-  const isLoading = useTemplatesStore((state) => state.isLoading);
-  const error = useTemplatesStore((state) => state.error);
-  const fetchTemplates = useTemplatesStore((state) => state.fetchTemplates);
-  const deleteTemplate = useTemplatesStore((state) => state.deleteTemplate);
-  const setSelectedTemplateId = useTemplatesStore(
-    (state) => state.setSelectedTemplateId,
-  );
+
+  const { templates, isLoading, error, fetchTemplates, deleteTemplate } =
+    useTemplateList();
+
+  const { setSelectedTemplateId } = useJournal();
 
   useEffect(() => {
     fetchTemplates();
@@ -36,6 +36,7 @@ export const TemplatesPage = () => {
         <h2 className="text-2xl font-space-grotesk text-[#fcfdff]">
           Templates
         </h2>
+
         <Button
           className="bg-white text-black"
           onClick={() => navigate({ to: "/add_templates" })}
@@ -69,6 +70,7 @@ export const TemplatesPage = () => {
               totalTonnage={getTemplateTotalTonnage(template.exercises)}
               onOpen={() => {
                 setSelectedTemplateId(template.id);
+
                 navigate({ to: "/journal" });
               }}
               onDelete={() => deleteTemplate(template.id)}
